@@ -1,5 +1,5 @@
 # Mercuriy_automatization
-This programm is created for fast product inventory in automated information system "Mercuriy"
+This programm is created for fast product inventory in automated information system "Mercuriy".
 To use it you need to create file login_data.py and make in this file two variables: 
 
 login = "LOGIN"
