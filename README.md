@@ -3,6 +3,7 @@ This programm is created for fast product inventory in automated information sys
 To use it you need to create file login_data.py and make in this file two variables: 
 
 login = "LOGIN"
+
 password = "PASSWORD"
 (Check the example file "login_data.py" in this repo)
 
