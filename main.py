@@ -4,8 +4,6 @@ from login_data import password, login
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 
 # Working 20.08.2023
@@ -16,8 +14,10 @@ options.add_argument("--disable-blink-features=AutomationControlled")  # Disable
 options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
                      " Chrome/96.0.4664.110 Safari/537.36")
 url = "https://mercury.vetrf.ru/hs"
-driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+driver = webdriver.Chrome(options=options)
 driver.implicitly_wait(10)
+
+pd.set_option('display.max_rows', None)
 
 
 def open_inventory_window():
@@ -111,12 +111,15 @@ try:
     password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
     password_input.send_keys(password)  # Вводим пароль пользователя
     driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
-    driver.find_element(By.XPATH, '//*[@id="body"]/form/table/tbody/tr[1]/td/div/label[2]').click()  # Выбираем объект учёта
+    driver.find_element(By.XPATH,
+                        '//*[@id="body"]/form/table/tbody/tr[1]/td/div/label[2]').click()  # Выбираем объект учёта
     driver.find_element(By.CLASS_NAME, "positive").click()  # Подтверждаем выбор
-    driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true")  # Журнал продукции
+    driver.get(
+        "https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true")  # Журнал продукции
     driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
     driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
-    amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(")").strip() #  (Найдено: n)
+    amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(
+        ")").strip()  # (Найдено: n)
 
     # Составление списка с граничными номерами страниц
     amount = (float(amount) / 100).__ceil__()
@@ -132,11 +135,13 @@ try:
     while (current_pages_idx + 1) < len(pagelist):
         driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
         driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
-        pages = driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
-        pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx+1]}")
+        pages = driver.find_element(By.XPATH,
+                                    '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
+        pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
         driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]').click()  # Селектор наборов полей
         driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]/option[2]').click()  # Выбираем main
-        driver.find_element(By.XPATH, '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
+        driver.find_element(By.XPATH,
+                            '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
         main_handle = driver.current_window_handle
         driver.switch_to.window(driver.window_handles[1])
         time.sleep(3)
@@ -148,13 +153,14 @@ try:
         driver.switch_to.window(main_handle)
         current_pages_idx += 1
     data['Годен до'] = data['Годен до'].apply(format_date)
+    # data.sort_values(by='Годен до')
     print(data)
     codes = create_list_codes(data)
     print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
     load_codes(codes)
 
     for i in range(2):
-        print(f"Программа автоматически завершит свою работу через {20 - (i*10)} секунд")
+        print(f"Программа автоматически завершит свою работу через {20 - (i * 10)} секунд")
         time.sleep(10)
 
 except Exception as ex:
