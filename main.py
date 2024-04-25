@@ -114,14 +114,12 @@ def create_list_codes(df):
 
 try:
     driver.get(url)
-    driver.get_screenshot_as_file("screenshot1.png")
     username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
     username_input.send_keys(os.environ.get('USERNAME'))  # Вводим имя пользователя
     password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
     password_input.send_keys(os.environ.get('PASSWORD'))  # Вводим пароль пользователя
     driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
     # time.sleep(100)
-    driver.get_screenshot_as_file("screenshot2.png")
     driver.find_element(By.XPATH,
                         '//*[@id="body"]/form/div/div[1]/div/label[2]').click()  # Выбираем объект учёта
     # time.sleep(30)
