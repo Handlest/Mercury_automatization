@@ -1,23 +1,30 @@
+import os
 import time
 import datetime
-from login_data import password, login
+from bot_notificator import send_message
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
+from dotenv import load_dotenv
 
-# Working 20.08.2023
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path)
+
+# Working 25.05.2024
 # Driver settings
 options = webdriver.ChromeOptions()
-options.headless = False  # Interact with browser without any interface
+options.add_argument("--headless=new")  # Interact with browser without any interface
 options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
 options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
                      " Chrome/96.0.4664.110 Safari/537.36")
+options.add_argument("--window-size=1920,1080")
 url = "https://mercury.vetrf.ru/hs"
-driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
+driver = webdriver.Chrome(options=options)
 driver.implicitly_wait(10)
+
+pd.set_option('display.max_rows', None)
 
 
 def open_inventory_window():
@@ -57,6 +64,7 @@ def load_into_window(code, number):
 def load_codes(codelist):
     if len(codelist) == 0:
         print("Товаров, подлежащих инвентаризации не найдено")
+        send_message("Товаров, подлежащих инвентаризации не найдено")
         return
     counter = 0
     open_inventory_window()
@@ -106,17 +114,24 @@ def create_list_codes(df):
 
 try:
     driver.get(url)
+    driver.get_screenshot_as_file("screenshot1.png")
     username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
-    username_input.send_keys(login)  # Вводим имя пользователя
+    username_input.send_keys(os.environ.get('USERNAME'))  # Вводим имя пользователя
     password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
-    password_input.send_keys(password)  # Вводим пароль пользователя
+    password_input.send_keys(os.environ.get('PASSWORD'))  # Вводим пароль пользователя
     driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
-    driver.find_element(By.XPATH, '//*[@id="body"]/form/table/tbody/tr[1]/td/div/label[2]').click()  # Выбираем объект учёта
-    driver.find_element(By.CLASS_NAME, "positive").click()  # Подтверждаем выбор
-    driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true")  # Журнал продукции
+    # time.sleep(100)
+    driver.get_screenshot_as_file("screenshot2.png")
+    driver.find_element(By.XPATH,
+                        '//*[@id="body"]/form/div/div[1]/div/label[2]').click()  # Выбираем объект учёта
+    # time.sleep(30)
+    driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
+    driver.get(
+        "https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
     driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
     driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
-    amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(")").strip() #  (Найдено: n)
+    amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(
+        ")").strip()  # (Найдено: n)
 
     # Составление списка с граничными номерами страниц
     amount = (float(amount) / 100).__ceil__()
@@ -132,11 +147,13 @@ try:
     while (current_pages_idx + 1) < len(pagelist):
         driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
         driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
-        pages = driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
-        pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx+1]}")
+        pages = driver.find_element(By.XPATH,
+                                    '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
+        pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
         driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]').click()  # Селектор наборов полей
         driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]/option[2]').click()  # Выбираем main
-        driver.find_element(By.XPATH, '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
+        driver.find_element(By.XPATH,
+                            '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
         main_handle = driver.current_window_handle
         driver.switch_to.window(driver.window_handles[1])
         time.sleep(3)
@@ -151,15 +168,19 @@ try:
     print(data)
     codes = create_list_codes(data)
     print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
+    send_message(f"Записей подлежащих инвентаризации: {len(codes)}")
     load_codes(codes)
 
-    for i in range(2):
-        print(f"Программа автоматически завершит свою работу через {20 - (i*10)} секунд")
-        time.sleep(10)
+    # for i in range(2):
+    #     print(f"Программа автоматически завершит свою работу через {20 - (i * 10)} секунд")
+    #     time.sleep(10)
+    send_message("Программа успешно завершила работу")
 
 except Exception as ex:
     print(ex)
-    time.sleep(20)
+    send_message("Произошла ошибка при инвентаризации!")
+    send_message(ex)
+    # time.sleep(20)
 finally:
     driver.close()
     driver.quit()

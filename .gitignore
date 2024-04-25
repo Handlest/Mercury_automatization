@@ -140,5 +140,6 @@ cython_debug/
 
 /test_file.txt
 /login_data.py
+login_data.py
 /test.py
 .idea/
