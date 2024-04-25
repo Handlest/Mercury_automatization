@@ -178,7 +178,6 @@ except Exception as ex:
     print(ex)
     send_message("Произошла ошибка при инвентаризации!")
     send_message(ex)
-    # time.sleep(20)
 finally:
     driver.close()
     driver.quit()
