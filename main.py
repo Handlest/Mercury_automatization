@@ -1,30 +1,18 @@
-import os
 import time
 import datetime
+
+from Mercury_automatization.db_operations import get_all_users
 from bot_notificator import send_message
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
 import pandas as pd
-from dotenv import load_dotenv
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-if os.path.exists(dotenv_path):
-    load_dotenv(dotenv_path)
+# dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+# if os.path.exists(dotenv_path):
+#     load_dotenv(dotenv_path)
 
-# Working 25.05.2024
-# Driver settings
-options = webdriver.ChromeOptions()
-options.add_argument("--headless=new")  # Interact with browser without any interface
-options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
-                     " Chrome/96.0.4664.110 Safari/537.36")
-options.add_argument("--window-size=1920,1080")
-url = "https://mercury.vetrf.ru/hs"
-driver = webdriver.Chrome(options=options)
-driver.implicitly_wait(10)
-
-pd.set_option('display.max_rows', None)
+# Working 28.08.2024
 
 
 def open_inventory_window():
@@ -64,7 +52,6 @@ def load_into_window(code, number):
 def load_codes(codelist):
     if len(codelist) == 0:
         print("Товаров, подлежащих инвентаризации не найдено")
-        send_message("Товаров, подлежащих инвентаризации не найдено")
         return
     counter = 0
     open_inventory_window()
@@ -112,72 +99,86 @@ def create_list_codes(df):
     return result
 
 
-try:
-    driver.get(url)
-    username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
-    username_input.send_keys(os.environ.get('USERNAME'))  # Вводим имя пользователя
-    password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
-    password_input.send_keys(os.environ.get('PASSWORD'))  # Вводим пароль пользователя
-    driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
-    # time.sleep(100)
-    driver.find_element(By.XPATH,
-                        '//*[@id="body"]/form/div/div[1]/div/label[2]').click()  # Выбираем объект учёта
-    # time.sleep(30)
-    driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
-    driver.get(
-        "https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
-    driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
-    driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
-    amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(
-        ")").strip()  # (Найдено: n)
+for user in get_all_users():
+    # Driver settings
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")  # Interact with browser without any interface
+    options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+                         " Chrome/96.0.4664.110 Safari/537.36")
+    options.add_argument("--window-size=1920,1080")
+    url = "https://mercury.vetrf.ru/hs"
+    driver = webdriver.Chrome(options=options)
+    driver.implicitly_wait(50)
 
-    # Составление списка с граничными номерами страниц
-    amount = (float(amount) / 100).__ceil__()
-    pagelist = [1]
-    pagelist.extend([i for i in range(10, amount, 10)])
-    pagelist.append((pagelist[-1] + amount % 10) if amount >= 10 else amount % 10)
-
-    current_pages_idx = 0
-    data = pd.DataFrame()
-
-    driver.find_element(By.NAME, 'rows').click()  # Выбор менюшки
-    driver.find_element(By.XPATH, '//*[@id="pageNavBlock"]/div[2]/select/option[6]').click()  # Выбор пункта меню 100
-    while (current_pages_idx + 1) < len(pagelist):
-        driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
-        driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
-        pages = driver.find_element(By.XPATH,
-                                    '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
-        pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
-        driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]').click()  # Селектор наборов полей
-        driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]/option[2]').click()  # Выбираем main
+    pd.set_option('display.max_rows', None)
+    try:
+        driver.get(url)
+        username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
+        username_input.send_keys(user['login'])  # Вводим имя пользователя
+        password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
+        password_input.send_keys(user['password'])  # Вводим пароль пользователя
+        driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
+        # time.sleep(100)
         driver.find_element(By.XPATH,
-                            '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
-        main_handle = driver.current_window_handle
-        driver.switch_to.window(driver.window_handles[1])
-        time.sleep(3)
-        page_to_print = pd.read_html(driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML"))
-        page_to_print = page_to_print[-1]
-        page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
-        data = pd.concat([data, page_to_print], ignore_index=True)
+                            '//*[@id="body"]/form/div/div[1]/div/label[2]').click()  # Выбираем объект учёта
+        # time.sleep(30)
+        driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
+        driver.get(
+            "https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
+        driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
+        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
+        amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(
+            ")").strip()  # (Найдено: n)
+
+        # Составление списка с граничными номерами страниц
+        amount = (float(amount) / 100).__ceil__()
+        pagelist = [1]
+        pagelist.extend([i for i in range(10, amount, 10)])
+        pagelist.append((pagelist[-1] + amount % 10) if amount >= 10 else amount % 10)
+
+        current_pages_idx = 0
+        data = pd.DataFrame()
+
+        driver.find_element(By.NAME, 'rows').click()  # Выбор менюшки
+        driver.find_element(By.XPATH, '//*[@id="pageNavBlock"]/div[2]/select/option[6]').click()  # Выбор пункта меню 100
+        while (current_pages_idx + 1) < len(pagelist):
+            driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
+            driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
+            pages = driver.find_element(By.XPATH,
+                                        '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
+            pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
+            driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]').click()  # Селектор наборов полей
+            driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]/option[2]').click()  # Выбираем main
+            driver.find_element(By.XPATH,
+                                '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
+            main_handle = driver.current_window_handle
+            driver.switch_to.window(driver.window_handles[1])
+            time.sleep(3)
+            page_to_print = pd.read_html(driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML"))
+            page_to_print = page_to_print[-1]
+            page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
+            data = pd.concat([data, page_to_print], ignore_index=True)
+            driver.close()
+            driver.switch_to.window(main_handle)
+            current_pages_idx += 1
+        data['Годен до'] = data['Годен до'].apply(format_date)
+        print(data)
+        codes = create_list_codes(data)
+        print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
+        send_message(message=f"Записей подлежащих инвентаризации: {len(codes)}", chat_id=user['telegram_id'])
+        load_codes(codes)
+
+        # for i in range(2):
+        #     print(f"Программа автоматически завершит свою работу через {20 - (i * 10)} секунд")
+        #     time.sleep(10)
+        send_message(message="Программа успешно завершила работу", chat_id=user['telegram_id'])
+
+    except Exception as ex:
+        print(ex)
+        send_message(message="Произошла ошибка при инвентаризации! Уже разбираемся..", chat_id=user['telegram_id'])
+        send_message(message=f"Произошла ошибка при инвентаризации пользователем {user['login']}\n" + str(ex),
+                     chat_id="954179273")
+    finally:
         driver.close()
-        driver.switch_to.window(main_handle)
-        current_pages_idx += 1
-    data['Годен до'] = data['Годен до'].apply(format_date)
-    print(data)
-    codes = create_list_codes(data)
-    print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
-    send_message(f"Записей подлежащих инвентаризации: {len(codes)}")
-    load_codes(codes)
-
-    # for i in range(2):
-    #     print(f"Программа автоматически завершит свою работу через {20 - (i * 10)} секунд")
-    #     time.sleep(10)
-    send_message("Программа успешно завершила работу")
-
-except Exception as ex:
-    print(ex)
-    send_message("Произошла ошибка при инвентаризации!")
-    send_message(ex)
-finally:
-    driver.close()
-    driver.quit()
+        driver.quit()

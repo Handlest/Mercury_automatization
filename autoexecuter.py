@@ -16,5 +16,5 @@ with open("next_exec_time.txt") as file:
         tomorrow = datetime.date.today() + datetime.timedelta(days=1)
         file.close()
         file = open("next_exec_time.txt", "w")
-        file.writelines(f"{random.randint(17, 23)}:{random.randint(10, 59)}\n")
+        file.writelines(f"{random.randint(17, 23)}:{random.randint(1, 59)}\n")
         file.writelines(f"{tomorrow.year}-{tomorrow.month}-{tomorrow.day}\n")
