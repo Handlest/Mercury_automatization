@@ -1,7 +1,8 @@
+import os
 import time
 import datetime
 
-from db_operations import get_all_users
+from db_operations import get_all_users, update_db
 from bot_notificator import send_message
 from selenium.webdriver.common.by import By
 from selenium import webdriver
@@ -98,6 +99,10 @@ def create_list_codes(df):
             result.append(row[0])
     return result
 
+
+if (not os.path.exists("my_database.db") and datetime.datetime.today().strftime('%Y-%m-%d') == datetime.datetime.strptime("2024-08-28", '%Y-%m-%d').strftime('%Y-%m-%d')):
+    print("configuration needed")
+    update_db()
 
 for user in get_all_users():
     # Driver settings

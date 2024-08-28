@@ -29,7 +29,7 @@ def update_db():
     id INTEGER PRIMARY KEY,
     username TEXT NOT NULL,
     password TEXT NOT NULL,
-    telegram INTEGER)
+    telegram TEXT)
     ''')
 
     username = input('Enter username: ')
