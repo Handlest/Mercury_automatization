@@ -11,5 +11,5 @@ bot = telebot.TeleBot(os.environ.get("API_TOKEN"))
 
 def send_message(message, chat_id: str):
     bot.send_message("954179273", message)
-    if chat_id != "954179273":
+    if str(chat_id) != "954179273":
         bot.send_message(chat_id, message)

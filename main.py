@@ -163,7 +163,7 @@ for user in get_all_users():
             driver.switch_to.window(main_handle)
             current_pages_idx += 1
         data['Годен до'] = data['Годен до'].apply(format_date)
-        print(data)
+        # print(data)
         codes = create_list_codes(data)
         print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
         send_message(message=f"Записей подлежащих инвентаризации: {len(codes)}", chat_id=user['telegram_id'])

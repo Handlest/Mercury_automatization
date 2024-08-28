@@ -7,8 +7,6 @@ def get_all_users() -> list:
     cursor.execute('SELECT * FROM Users')
     users = cursor.fetchall()
     result = [{"login": user[1], "password": user[2], "telegram_id": user[3]} for user in users]
-    for user in result:
-        print(user)
     connection.close()
     return result
 
@@ -42,5 +40,5 @@ def update_db():
     connection.commit()
     connection.close()
 
-#
+
 # update_db()
