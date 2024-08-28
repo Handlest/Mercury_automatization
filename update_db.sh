@@ -1,0 +1,1 @@
+venv/bin/python3.10 update_db.py
