@@ -1,7 +1,7 @@
 import time
 import datetime
 
-from Mercury_automatization.db_operations import get_all_users
+from db_operations import get_all_users
 from bot_notificator import send_message
 from selenium.webdriver.common.by import By
 from selenium import webdriver
