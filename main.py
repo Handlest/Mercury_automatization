@@ -62,7 +62,10 @@ def load_codes(codelist):
         load_into_window(code, counter)
         if counter == 100:
             print('Журнал переполнен. Подтверждаем заявку и отправляем информацию...')
-            approve_and_send()
+            try:
+                approve_and_send()
+            except:
+                print("Не удалось подтвердить заявку...")
             open_inventory_window()
             counter = 0
     if counter != 0:
@@ -84,8 +87,12 @@ def format_date(date):
 
 def create_list_codes(df):
     def check_date(row):
-        arrival = datetime.datetime.strptime(row[1], '%d.%m.%Y')
-        expiry = datetime.datetime.strptime(row[2], '%d.%m.%Y')
+        try:
+            arrival = datetime.datetime.strptime(row[1], '%d.%m.%Y')
+            expiry = datetime.datetime.strptime(row[2], '%d.%m.%Y')
+        except:
+            print("Произошла ошибка при работе с датой. Объект: ", row)
+            return False
         today = datetime.datetime.now()
         two_months_ago = (today - datetime.timedelta(days=60))
         if (expiry <= today) or (arrival <= two_months_ago):
@@ -99,15 +106,21 @@ def create_list_codes(df):
             result.append(row[0])
     return result
 
+def load_page():
+    try:
+        page_to_print = pd.read_html(driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML"))
+        return page_to_print
+    except:
+        return None
 
-if (not os.path.exists("my_database.db") and datetime.datetime.today().strftime('%Y-%m-%d') == datetime.datetime.strptime("2024-08-28", '%Y-%m-%d').strftime('%Y-%m-%d')):
+if (not os.path.exists("my_database.db") and datetime.datetime.today().strftime('%Y-%m-%d') == datetime.datetime.strptime("2024-09-08", '%Y-%m-%d').strftime('%Y-%m-%d')):
     print("configuration needed")
     update_db()
 
 for user in get_all_users():
     # Driver settings
     options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")  # Interact with browser without any interface
+    # options.add_argument("--headless=new")  # Interact with browser without any interface
     options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
                          " Chrome/96.0.4664.110 Safari/537.36")
@@ -126,7 +139,7 @@ for user in get_all_users():
         driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
         # time.sleep(100)
         driver.find_element(By.XPATH,
-                            '//*[@id="body"]/form/div/div[1]/div/label[2]').click()  # Выбираем объект учёта
+                            f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]').click()  # Выбираем объект учёта
         # time.sleep(30)
         driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
         driver.get(
@@ -138,16 +151,17 @@ for user in get_all_users():
 
         # Составление списка с граничными номерами страниц
         amount = (float(amount) / 100).__ceil__()
-        pagelist = [1]
-        pagelist.extend([i for i in range(10, amount, 10)])
-        pagelist.append((pagelist[-1] + amount % 10) if amount >= 10 else amount % 10)
-
+        pagelist = [0]
+        pagelist.extend([i for i in range(9, amount, 9)])
+        pagelist.append((pagelist[-1] + amount % 9) if amount >= 9 else amount % 9)
+        print(f"pagelist:{pagelist}")
         current_pages_idx = 0
         data = pd.DataFrame()
 
         driver.find_element(By.NAME, 'rows').click()  # Выбор менюшки
         driver.find_element(By.XPATH, '//*[@id="pageNavBlock"]/div[2]/select/option[6]').click()  # Выбор пункта меню 100
         while (current_pages_idx + 1) < len(pagelist):
+            print(f"pages: {pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
             driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
             driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
             pages = driver.find_element(By.XPATH,
@@ -159,8 +173,10 @@ for user in get_all_users():
                                 '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
             main_handle = driver.current_window_handle
             driver.switch_to.window(driver.window_handles[1])
-            time.sleep(3)
-            page_to_print = pd.read_html(driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML"))
+            page_to_print = None
+            while page_to_print is None:
+                time.sleep(1)
+                page_to_print = load_page()
             page_to_print = page_to_print[-1]
             page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
             data = pd.concat([data, page_to_print], ignore_index=True)

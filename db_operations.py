@@ -6,7 +6,8 @@ def get_all_users() -> list:
     cursor = connection.cursor()
     cursor.execute('SELECT * FROM Users')
     users = cursor.fetchall()
-    result = [{"login": user[1], "password": user[2], "telegram_id": user[3]} for user in users]
+    result = [{"login": user[1], "password": user[2], "object_index": user[3], "telegram_id": user[4]} for user in users]
+    print(result)
     connection.close()
     return result
 
@@ -29,14 +30,17 @@ def update_db():
     id INTEGER PRIMARY KEY,
     username TEXT NOT NULL,
     password TEXT NOT NULL,
+    object_index TEXT NOT NULL,
     telegram TEXT)
     ''')
 
     username = input('Enter username: ')
     password = input('Enter password: ')
     telegram = input('Enter telegram: ')
+    object_index = input('Enter object index: ')
 
-    cursor.execute('INSERT INTO Users (username, password, telegram) VALUES (?, ?, ?)', (username, password, telegram))
+    cursor.execute('INSERT INTO Users (username, password, object_index, telegram) VALUES (?, ?, ?, ?)',
+                   (username, password, object_index, telegram))
     connection.commit()
     connection.close()
 
