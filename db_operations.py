@@ -7,7 +7,6 @@ def get_all_users() -> list:
     cursor.execute('SELECT * FROM Users')
     users = cursor.fetchall()
     result = [{"login": user[1], "password": user[2], "object_index": user[3], "telegram_id": user[4]} for user in users]
-    print(result)
     connection.close()
     return result
 

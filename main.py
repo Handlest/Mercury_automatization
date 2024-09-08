@@ -120,7 +120,8 @@ if (not os.path.exists("my_database.db") and datetime.datetime.today().strftime(
 for user in get_all_users():
     # Driver settings
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless=new")  # Interact with browser without any interface
+    options.add_argument("--no-sandbox")
+    options.add_argument("--headless=new")  # Interact with browser without any interface
     options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
                          " Chrome/96.0.4664.110 Safari/537.36")
