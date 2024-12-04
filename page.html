@@ -1,0 +1,208 @@
+<html class="h-100"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rosselkhoznadzor / Federal Service for Veterinary and Phytosanitary Surveillance</title>
+    <link rel="stylesheet" type="text/css" href="/idp/css/bootstrap.min.css?3.11">
+    <link rel="stylesheet" type="text/css" href="/idp/css/structure.css?3.11">
+    <link rel="shortcut icon" type="image/x-icon" href="/idp/images/favicon.ico">
+    <script src="/idp/js/jquery.min.js?3.11"></script>
+    <script src="/idp/js/jquery.cookie.min.js?3.11"></script>
+    <script src="/idp/js/popper.min.js?3.11"></script>
+    <script src="/idp/js/bootstrap.min.js?3.11"></script>
+    <style>
+        #captcha-image {
+            height: 50px;
+            width: 200px;
+            background-image: url(data:image/png;base64,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)
+        }
+    </style>
+
+    <script>
+
+        window.onload = function () {
+            $('#captcha').focus();
+        };
+
+    </script>
+</head>
+<body class="d-flex flex-column h-100" style="">
+
+<nav class="navbar navbar-expand-sm navbar-vetrf navbar-light mb-4">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="http://vetrf.ru/">
+            <img src="/idp/images/minilogo.png?3.11" title="Rosselkhoznadzor / Federal Service for Veterinary and Phytosanitary Surveillance" alt="Rosselkhoznadzor / Federal Service for Veterinary and Phytosanitary Surveillance">
+        </a>
+        <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarCollapse">
+            <ul class="navbar-nav ms-auto mb-2 mb-md-0">
+                <li class="nav-item">
+                    <a href="https://help.vetrf.ru/" class="help-system-nav">Help</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+<main class="flex-shrink-0">
+    <div class="container">
+        <div class="row align-items-center gx-6">
+            <div class="col-md-6 col-sm-12">
+                <div class="row align-items-center">
+                            <div class="col-lg-4 col-xs-12 text-lg-start text-center">
+                                <img class="system-logo" src="https://accounts.vetrf.ru/img/mini/mercury2.0.png" alt="Меркурий.ХС">
+                            </div>
+                        <div class="col">
+                            <h2 class="system-name text-lg-start text-center">Меркурий.ХС</h2>
+                        </div>
+                </div>
+                    <div class="row justify-content-center justify-content-md-start">
+                        <div class="cons-description">Подсистема
+                    хозяйствующего субъекта.</div>
+                    </div>
+            </div>
+            <div class="col-md-6 col-sm-12">
+                <div class="row justify-content-center">
+                    <div class="signing-box">
+                        <div class="row">
+                            <h2 class="col-12">Confirm you are not a bot</h2>
+                        </div>
+                        <div class="signing-line row"></div>
+
+                        <form action="/idp/profile/SAML2/POST/SSO?execution=e1s1" method="post">
+                            <div class="code-div mb-3">
+                                <div id="captcha-image"></div>
+                                <label for="captcha" class="form-label code-label">Image text </label>
+                                <input class="form-control" id="captcha" name="captcha" type="text" value="" autocomplete="off">
+                                <input type="hidden" name="_eventId_proceed" value="">
+                            </div>
+                            <div class="signing-line"></div>
+                            <div class="wrap-login">
+                                <a href="/idp/profile/SAML2/POST/SSO?execution=e1s1&amp;_eventId=RegenerateCaptcha" style="float: left; margin-left: 30px; margin-top: 5px;">Refresh image</a>
+                                <button class="btn login-btn btn-success" style="margin-bottom: 0px;" type="submit" name="_eventId_proceed">Confirm</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+<footer class="footer mt-auto py-3">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 col-xs-12" id="con-systems">
+                <h4 class="con-foo-h">Services</h4>
+                <div class="d-none d-lg-block">
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/argus.html">Argus</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/mercury.html">Mercury</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/vesta.html">Vesta</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/irena.html">Irena</a>
+                        </li>
+                    </ul>
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/assol.html">Assol</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/germes.html">Germes</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/cerberus.html">Cerberus</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="http://sirano.vetrf.ru/">Sirano</a>
+                        </li>
+                    </ul>
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="https://accounts.vetrf.ru/">Passport</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="http://duma.vetrf.ru/duma/login.html">Duma</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://ecert.vetrf.ru/">eCert</a>
+                        </li>
+                        <li class="list-group-item">
+
+                        </li>
+                    </ul>
+                </div>
+                <div class="d-lg-none d-xs-block">
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/argus.html">Argus</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/mercury.html">Mercury</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/vesta.html">Vesta</a>
+                        </li>
+                    </ul>
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/assol.html">Assol</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/germes.html">Germes</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/cerberus.html">Cerberus</a>
+                        </li>
+                    </ul>
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="https://accounts.vetrf.ru/">Passport</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="http://duma.vetrf.ru/duma/login.html">Duma</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://ecert.vetrf.ru/">eCert</a>
+                        </li>
+                    </ul>
+                    <ul class=" list-group list-group-horizontal con-sys-ul">
+                        <li class="list-group-item">
+                            <a href="http://sirano.vetrf.ru/">Sirano</a>
+                        </li>
+                        <li class="list-group-item">
+                            <a href="https://vetrf.ru/vetrf/irena.html">Irena</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+
+            <div class="col-sm-4 col-lg-2 col-xs-12" id="con-contacts">
+                <h4 class="con-foo-h">Contacts</h4>
+                <p class="con-email">e-mail: <a href="mailto:support@fsvps.ru">support@fsvps.ru</a></p>
+            </div>
+
+            <div class="col-sm-8 col-lg-4 col-xs-12 con-copyright">
+                <a href="http://www.fsvps.ru/" target="_blank">
+                    <img src="/idp/images/eagle.png" class="con-eagle" title="Federal Service for Veterinary and Phytosanitary Surveillance" alt="Federal Service for Veterinary and Phytosanitary Surveillance">
+                </a>
+                <div class="con-cop-text"><script type="text/javascript">
+                    var d = new Date();
+                    document.write('© 2007 — ' + d.getFullYear() + ' Federal Service for Veterinary and Phytosanitary Surveillance');
+                </script>© 2007 — 2024 Federal Service for Veterinary and Phytosanitary Surveillance
+                </div>
+            </div>
+
+        </div>
+    </div>
+</footer>
+
+</body></html>

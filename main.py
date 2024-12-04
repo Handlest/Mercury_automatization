@@ -1,9 +1,10 @@
 import os
 import time
 import datetime
+from base64 import b64decode
 
 from db_operations import get_all_users, update_db
-from bot_notificator import send_message
+from bot_notificator import send_message, send_photo
 from selenium.webdriver.common.by import By
 from selenium import webdriver
 from selenium.webdriver.support.ui import Select
@@ -14,6 +15,20 @@ import pandas as pd
 #     load_dotenv(dotenv_path)
 
 # Working 28.08.2024
+
+
+def get_reply_and_use(message):
+    driver.find_element(By.ID, "captcha").send_keys(process_captcha(message.text))
+    driver.find_element(By.XPATH, "/html/body/main/div/div/div[2]/div/div/form/div[3]/button").click()
+
+
+def process_captcha(driver):
+    img = driver.find_element(By.ID, "captcha-image")
+    img.screenshot("captcha_lol.png")
+
+    send_photo("captcha_lol.png")
+    print('Captcha sent')
+    return input("Введи сохранённую капчу: ")
 
 
 def open_inventory_window():
@@ -86,12 +101,52 @@ def format_date(date):
 
 
 def create_list_codes(df):
+    MONTHS = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"]
+
+    def check_string(string: str):
+        for month in MONTHS:
+            if month in string.lower():
+                return True
+        return False
+
+    def is_good(string: str):
+        try:
+            _ = datetime.datetime.strptime(string, '%d.%m.%Y')
+            return True
+        except:
+            return False
+
+    def parse_date_russian(date: str) -> datetime.datetime:  # Парсит даты в формате "Декабрь 2020"
+        date = date.lower()
+        month, year = date.split(" ")
+        month = MONTHS.index(month) + 1
+        year = int(year)
+        return datetime.datetime.strptime(f"01.{month}.{year}", "%d.%m.%Y")
+
     def check_date(row):
+        arrival = None
+        expiry = None
         try:
             arrival = datetime.datetime.strptime(row[1], '%d.%m.%Y')
             expiry = datetime.datetime.strptime(row[2], '%d.%m.%Y')
         except:
-            print("Произошла ошибка при работе с датой. Объект: ", row)
+            print("\nПроизошла ошибка при работе с датой. Объект: ", row, "Попытка распарсить даты")
+            if is_good(row[1]):
+                arrival = datetime.datetime.strptime(row[1], '%d.%m.%Y')
+            if is_good(row[2]):
+                expiry = datetime.datetime.strptime(row[2], '%d.%m.%Y')
+            if arrival is None:
+                if check_string(row[1]):
+                    arrival = parse_date_russian(row[1])
+            if expiry is None:
+                if check_string(row[2]):
+                    expiry = parse_date_russian(row[2])
+            if arrival is not None and expiry is not None:
+                print(f"Даты обработаны. Получено: {arrival}, {expiry}\n")
+                today = datetime.datetime.now()
+                two_months_ago = (today - datetime.timedelta(days=60))
+                if (expiry <= today) or (arrival <= two_months_ago):
+                    return True
             return False
         today = datetime.datetime.now()
         two_months_ago = (today - datetime.timedelta(days=60))
@@ -106,6 +161,7 @@ def create_list_codes(df):
             result.append(row[0])
     return result
 
+
 def load_page():
     try:
         page_to_print = pd.read_html(driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML"))
@@ -113,11 +169,13 @@ def load_page():
     except:
         return None
 
+
 if (not os.path.exists("my_database.db") and datetime.datetime.today().strftime('%Y-%m-%d') == datetime.datetime.strptime("2024-09-08", '%Y-%m-%d').strftime('%Y-%m-%d')):
     print("configuration needed")
     update_db()
 
 for user in get_all_users():
+    print("Текущий пользователь: ", user)
     # Driver settings
     options = webdriver.ChromeOptions()
     options.add_argument("--no-sandbox")
@@ -127,13 +185,17 @@ for user in get_all_users():
                          " Chrome/96.0.4664.110 Safari/537.36")
     options.add_argument("--window-size=1920,1080")
     url = "https://mercury.vetrf.ru/hs"
+    global driver
     driver = webdriver.Chrome(options=options)
-    driver.implicitly_wait(50)
+    driver.implicitly_wait(5)
 
     pd.set_option('display.max_rows', None)
     try:
         driver.get(url)
-        username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
+        try:
+            username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
+        except Exception as e:
+            username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
         username_input.send_keys(user['login'])  # Вводим имя пользователя
         password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
         password_input.send_keys(user['password'])  # Вводим пароль пользователя
@@ -150,9 +212,12 @@ for user in get_all_users():
         amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(
             ")").strip()  # (Найдено: n)
 
+        if int(amount) == 0:
+            continue
+
         # Составление списка с граничными номерами страниц
         amount = (float(amount) / 100).__ceil__()
-        pagelist = [0]
+        pagelist = [1]
         pagelist.extend([i for i in range(9, amount, 9)])
         pagelist.append((pagelist[-1] + amount % 9) if amount >= 9 else amount % 9)
         print(f"pagelist:{pagelist}")
@@ -178,6 +243,7 @@ for user in get_all_users():
             while page_to_print is None:
                 time.sleep(1)
                 page_to_print = load_page()
+                print(type(page_to_print))
             page_to_print = page_to_print[-1]
             page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
             data = pd.concat([data, page_to_print], ignore_index=True)
