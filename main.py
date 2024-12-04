@@ -113,7 +113,7 @@ def load_page():
     except:
         return None
 
-if (not os.path.exists("my_database.db") and datetime.datetime.today().strftime('%Y-%m-%d') == datetime.datetime.strptime("2024-09-08", '%Y-%m-%d').strftime('%Y-%m-%d')):
+if not os.path.exists("my_database.db"):
     print("configuration needed")
     update_db()
 
@@ -133,22 +133,25 @@ for user in get_all_users():
     pd.set_option('display.max_rows', None)
     try:
         driver.get(url)
-        username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
-        username_input.send_keys(user['login'])  # Вводим имя пользователя
-        password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
-        password_input.send_keys(user['password'])  # Вводим пароль пользователя
-        driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
+        if len(driver.find_elements(By.ID, "username")) == 0:
+            print("Поля для ввода не найдено, ожидаю появления окна с выбором объектов учёта...")
+            while (driver.find_elements(By.XPATH,f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]')) == 0:
+                time.sleep(2)
+                print("Окна с выбором поля для ввода не найдено...")
+        else:
+            username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
+            username_input.send_keys(user['login'])  # Вводим имя пользователя
+            password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
+            password_input.send_keys(user['password'])  # Вводим пароль пользователя
+            driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
         # time.sleep(100)
-        driver.find_element(By.XPATH,
-                            f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]').click()  # Выбираем объект учёта
+        driver.find_element(By.XPATH,f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]').click()  # Выбираем объект учёта
         # time.sleep(30)
         driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
-        driver.get(
-            "https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
+        driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
         driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
         driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
-        amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(
-            ")").strip()  # (Найдено: n)
+        amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(")").strip()  # (Найдено: n)
 
         # Составление списка с граничными номерами страниц
         amount = (float(amount) / 100).__ceil__()

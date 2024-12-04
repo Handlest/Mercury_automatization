@@ -33,10 +33,10 @@ def update_db():
     telegram TEXT)
     ''')
 
-    username = input('Enter username: ')
-    password = input('Enter password: ')
-    telegram = input('Enter telegram: ')
-    object_index = input('Enter object index: ')
+    username = input('Введите логин: ')
+    password = input('Введите пароль: ')
+    telegram = input('Введите телеграм ID(можно оставить пустым и нажать enter): ')
+    object_index = input('Введите номер объекта учёта (если он один, то цифру 2): ')
 
     cursor.execute('INSERT INTO Users (username, password, object_index, telegram) VALUES (?, ?, ?, ?)',
                    (username, password, object_index, telegram))
