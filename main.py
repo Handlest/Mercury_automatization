@@ -6,7 +6,8 @@ from db_operations import get_all_users, update_db
 from bot_notificator import send_message
 from selenium.webdriver.common.by import By
 from selenium import webdriver
-from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 
 # dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
@@ -121,7 +122,8 @@ for user in get_all_users():
     # Driver settings
     options = webdriver.ChromeOptions()
     options.add_argument("--no-sandbox")
-    options.add_argument("--headless=new")  # Interact with browser without any interface
+    options.add_argument("--disable-gpu")
+    # options.add_argument("--headless=new")  # Interact with browser without any interface
     options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
                          " Chrome/96.0.4664.110 Safari/537.36")
@@ -133,20 +135,8 @@ for user in get_all_users():
     pd.set_option('display.max_rows', None)
     try:
         driver.get(url)
-        if len(driver.find_elements(By.ID, "username")) == 0:
-            print("Поля для ввода не найдено, ожидаю появления окна с выбором объектов учёта...")
-            while (driver.find_elements(By.XPATH,f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]')) == 0:
-                time.sleep(2)
-                print("Окна с выбором поля для ввода не найдено...")
-        else:
-            username_input = driver.find_element(By.ID, "username")  # Выбираем окно "имя пользователя"
-            username_input.send_keys(user['login'])  # Вводим имя пользователя
-            password_input = driver.find_element(By.ID, "password")  # Выбираем окно "пароль"
-            password_input.send_keys(user['password'])  # Вводим пароль пользователя
-            driver.find_element(By.CLASS_NAME, "login-btn").click()  # Нажимаем на кнопку "войти"
-        # time.sleep(100)
-        driver.find_element(By.XPATH,f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]').click()  # Выбираем объект учёта
-        # time.sleep(30)
+        print("Для продолжения работы программы нужно войти вручную. Как только будет обнаружена страница с выбором ХС, программа продолжит работу")
+        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]'))).click() # Выбираем объект учёта
         driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
         driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
         driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
