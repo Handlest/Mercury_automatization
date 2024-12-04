@@ -144,3 +144,5 @@ cython_debug/
 login_data.py
 /test.py
 .idea/
+.html
+.png
