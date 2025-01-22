@@ -119,6 +119,7 @@ if not os.path.exists("my_database.db"):
     update_db()
 
 for user in get_all_users():
+    objects_amount = user['objects_amount']
     # Driver settings
     options = webdriver.ChromeOptions()
     options.add_argument("--no-sandbox")
@@ -136,59 +137,61 @@ for user in get_all_users():
     try:
         driver.get(url)
         print("Для продолжения работы программы нужно войти вручную. Как только будет обнаружена страница с выбором ХС, программа продолжит работу")
-        WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, f'//*[@id="body"]/form/div/div[1]/div/label[{user["object_index"]}]'))).click() # Выбираем объект учёта
-        driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
-        driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
-        driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
-        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
-        amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(")").strip()  # (Найдено: n)
+        for current_object in range(2, int(objects_amount) + 2):
+            print(f"Жду, когда появится элемент с номером {current_object}")
+            WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, f'//*[@id="body"]/form/div/div[1]/div/label[{current_object}]'))).click() # Выбираем объект учёта
+            driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
+            driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
+            driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
+            driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
+            amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(")").strip()  # (Найдено: n)
 
-        # Составление списка с граничными номерами страниц
-        amount = (float(amount) / 100).__ceil__()
-        pagelist = [0]
-        pagelist.extend([i for i in range(9, amount, 9)])
-        pagelist.append((pagelist[-1] + amount % 9) if amount >= 9 else amount % 9)
-        print(f"pagelist:{pagelist}")
-        current_pages_idx = 0
-        data = pd.DataFrame()
+            # Составление списка с граничными номерами страниц
+            amount = (float(amount) / 100).__ceil__()
+            pagelist = [0]
+            pagelist.extend([i for i in range(9, amount, 9)])
+            pagelist.append((pagelist[-1] + amount % 9) if amount >= 9 else amount % 9)
+            print(f"pagelist:{pagelist}")
+            current_pages_idx = 0
+            data = pd.DataFrame()
 
-        driver.find_element(By.NAME, 'rows').click()  # Выбор менюшки
-        driver.find_element(By.XPATH, '//*[@id="pageNavBlock"]/div[2]/select/option[6]').click()  # Выбор пункта меню 100
-        while (current_pages_idx + 1) < len(pagelist):
-            print(f"pages: {pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
-            driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
-            driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
-            pages = driver.find_element(By.XPATH,
-                                        '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
-            pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
-            driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]').click()  # Селектор наборов полей
-            driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]/option[2]').click()  # Выбираем main
-            driver.find_element(By.XPATH,
-                                '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
-            main_handle = driver.current_window_handle
-            driver.switch_to.window(driver.window_handles[1])
-            page_to_print = None
-            while page_to_print is None:
-                time.sleep(1)
-                page_to_print = load_page()
-            page_to_print = page_to_print[-1]
-            page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
-            data = pd.concat([data, page_to_print], ignore_index=True)
-            driver.close()
-            driver.switch_to.window(main_handle)
-            current_pages_idx += 1
-        data['Годен до'] = data['Годен до'].apply(format_date)
-        # print(data)
-        codes = create_list_codes(data)
-        print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
-        send_message(message=f"Записей подлежащих инвентаризации: {len(codes)}", chat_id=user['telegram_id'])
-        load_codes(codes)
-
-        # for i in range(2):
-        #     print(f"Программа автоматически завершит свою работу через {20 - (i * 10)} секунд")
-        #     time.sleep(10)
-        send_message(message="Программа успешно завершила работу", chat_id=user['telegram_id'])
-
+            driver.find_element(By.NAME, 'rows').click()  # Выбор менюшки
+            driver.find_element(By.XPATH, '//*[@id="pageNavBlock"]/div[2]/select/option[6]').click()  # Выбор пункта меню 100
+            while (current_pages_idx + 1) < len(pagelist):
+                print(f"pages: {pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
+                driver.find_element(By.XPATH, '//*[@id="printSettingsFormTop"]').click()  # Печать
+                driver.find_element(By.XPATH, '//*[@id="printScopeLayout"]/td[2]/div/label[3]').click()  # Страница:
+                pages = driver.find_element(By.XPATH,
+                                            '//*[@id="printScopeLayout"]/td[2]/div/input')  # Форма ввода числа страниц
+                pages.send_keys(f"{pagelist[current_pages_idx]}-{pagelist[current_pages_idx + 1]}")
+                driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]').click()  # Селектор наборов полей
+                driver.find_element(By.XPATH, '//*[@id="printSchemaSelect"]/option[2]').click()  # Выбираем main
+                driver.find_element(By.XPATH,
+                                    '//*[@id="printSettingsForm"]/table/tbody/tr[4]/td/div/button[1]').click()  # Печать
+                main_handle = driver.current_window_handle
+                driver.switch_to.window(driver.window_handles[1])
+                page_to_print = None
+                while page_to_print is None:
+                    time.sleep(1)
+                    page_to_print = load_page()
+                page_to_print = page_to_print[-1]
+                page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
+                data = pd.concat([data, page_to_print], ignore_index=True)
+                driver.close()
+                driver.switch_to.window(main_handle)
+                current_pages_idx += 1
+            data['Годен до'] = data['Годен до'].apply(format_date)
+            # print(data)
+            codes = create_list_codes(data)
+            print("Количество записей, удовлетворяющих критериям: " + str(len(codes)))
+            send_message(message=f"Записей подлежащих инвентаризации: {len(codes)}", chat_id=user['telegram_id'])
+            load_codes(codes)
+            # time.sleep(1000000)
+            # for i in range(2):
+            #     print(f"Программа автоматически завершит свою работу через {20 - (i * 10)} секунд")
+            #     time.sleep(10)
+            send_message(message="Программа успешно завершила работу", chat_id=user['telegram_id'])
+            driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=changeServicedEnterprise") # Смена предприятия
     except Exception as ex:
         print(ex)
         send_message(message="Произошла ошибка при инвентаризации! Уже разбираемся..", chat_id=user['telegram_id'])
