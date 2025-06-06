@@ -18,6 +18,8 @@ import pandas as pd
 
 
 def open_inventory_window():
+    print("Opening inventory window")
+    time.sleep(1)
     driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listInventory&stateMenu=0&all=true")  # Инвентаризация
     driver.find_element(By.XPATH, '//*[@id="body"]/form/div[1]/ul/li[4]/span').click()
     upper_window = Select(driver.find_element(By.XPATH, '//*[@id="inventory-cause"]'))  # Верхнее окошко
@@ -35,20 +37,24 @@ def open_inventory_window():
 
 
 def load_into_window(code, number):
-    window = driver.find_element(By.NAME, 'realTrafficVUTemplate')
-    window.clear()
-    window.send_keys(code)  # Загружаем код в окно
+    try:
+        driver.find_element(By.NAME, 'realTrafficVUTemplate').clear()
+        driver.find_element(By.NAME, 'realTrafficVUTemplate').send_keys(code)  # Загружаем код в окно
 
-    driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[1]').click()
-    driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  # Лупа
+        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[1]').click()
+        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  # Лупа
 
-    driver.find_element(By.ID, 'checkbox-all').click()
+        driver.find_element(By.ID, 'checkbox-all').click()
 
-    driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[2]').click()
-    driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  # Лупа
+        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[2]').click()
+        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  # Лупа
 
-    driver.find_element(By.ID, 'checkbox-all').click()
-    print(f'Добавлен элемент {number}){code}')
+        driver.find_element(By.ID, 'checkbox-all').click()
+        print(f'Добавлен элемент {number}){code}')
+    except Exception as e:
+        # driver.save_screenshot(f"error_{number}.png")
+        load_into_window(code, number)
+
 
 
 def load_codes(codelist):
@@ -56,6 +62,7 @@ def load_codes(codelist):
         print("Товаров, подлежащих инвентаризации не найдено")
         return
     counter = 0
+    time.sleep(1)
     open_inventory_window()
 
     for code in codelist:
@@ -67,6 +74,7 @@ def load_codes(codelist):
                 approve_and_send()
             except:
                 print("Не удалось подтвердить заявку...")
+            time.sleep(1)
             open_inventory_window()
             counter = 0
     if counter != 0:
