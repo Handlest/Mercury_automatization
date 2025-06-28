@@ -37,21 +37,44 @@ def open_inventory_window():
 
 
 def load_into_window(code, number):
+    counter = 0
     try:
         driver.find_element(By.NAME, 'realTrafficVUTemplate').clear()
+        counter += 1
+        
         driver.find_element(By.NAME, 'realTrafficVUTemplate').send_keys(code)  # Загружаем код в окно
+        counter += 1
 
         driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[1]').click()
-        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  # Лупа
+        counter += 1
+
+        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a').click() # Лупа
+        
+        # element = wait.until(
+        #     EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a'))) # Лупа
+        # element.click()
+        
+        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  
+        counter += 1
 
         driver.find_element(By.ID, 'checkbox-all').click()
+        counter += 1
 
         driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[2]').click()
-        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  # Лупа
+        counter += 1
+        
+        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a').click() # Лупа
+        
+        # element = wait.until(
+        #     EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a'))) # Лупа
+        # element.click()
+        
+        counter += 1
 
         driver.find_element(By.ID, 'checkbox-all').click()
         print(f'Добавлен элемент {number}){code}')
     except Exception as e:
+        print(counter)
         # driver.save_screenshot(f"error_{number}.png")
         load_into_window(code, number)
 
@@ -82,6 +105,7 @@ def load_codes(codelist):
 
 
 def approve_and_send():
+    print("approve_and_send")
     driver.find_element(By.XPATH, '//*[@id="submitButton"]/span').click()
     driver.find_element(By.XPATH, '//*[@id="formButton"]/span').click()
 
@@ -132,27 +156,45 @@ for user in get_all_users():
     options = webdriver.ChromeOptions()
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-gpu")
+    options.add_argument("disable-blink-features")
+    options.add_argument("disable-blink-features=AutomationControlled")
     # options.add_argument("--headless=new")  # Interact with browser without any interface
     options.add_argument("--disable-blink-features=AutomationControlled")  # Disable web-driver mode
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
                          " Chrome/96.0.4664.110 Safari/537.36")
     options.add_argument("--window-size=1920,1080")
-    url = "https://mercury.vetrf.ru/hs"
+    url = 'https://mercury.vetrf.ru/hs'
     driver = webdriver.Chrome(options=options)
     driver.implicitly_wait(50)
+    wait = WebDriverWait(driver, 10)
+
 
     pd.set_option('display.max_rows', None)
     try:
         driver.get(url)
         print("Для продолжения работы программы нужно войти вручную. Как только будет обнаружена страница с выбором ХС, программа продолжит работу")
-        for current_object in range(2, int(objects_amount) + 2):
+        for current_object in range(2, int(objects_amount) + 1):
+            print(f"Количество объектов для инвентаризации: {len(range(2, int(objects_amount) + 1))}")
             print(f"Жду, когда появится элемент с номером {current_object}")
             WebDriverWait(driver, 200).until(EC.element_to_be_clickable((By.XPATH, f'//*[@id="body"]/form/div/div[1]/div/label[{current_object}]'))).click() # Выбираем объект учёта
             driver.find_element(By.XPATH, "/html/body/div[1]/div/div[3]/form/div/div[2]/button[1]/span").click()  # Подтверждаем выбор
-            driver.get("https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true") # Журнал продукции
+            print("Перехожу в журнал продукции")
+            driver.get('https://mercury.vetrf.ru/hs/operatorui?_action=listRealTrafficVU&stateMenu=2&pageList=1&all=true&preview=true') # Журнал продукции
+            print("Выбираю неоформленные")
             driver.find_element(By.XPATH, '//*[@id="body"]/table/tbody/tr/td[1]/ul/li/ul/li[3]/a').click()  # Неоформленные
+            print("Клик на i")
             driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[1]').click()  # Нажимаем на i
-            amount = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text.split(':')[-1].strip(")").strip()  # (Найдено: n)
+            print("Извлекаю количество найденных элементов")
+
+            # total_size_view_id = driver.find_element(By.ID, 'totalSizeView').text
+            # partial_xpath = driver.find_element(By.XPATH, '//*[@id="totalSizeView"]').text
+            # full_xpath = driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/h3/span[3]').text
+            # print(f"id: {total_size_view_id}, part: {partial_xpath}, full: {full_xpath}")
+
+            amount = ''
+            while amount == '':
+                amount = driver.find_element(By.ID, 'totalSizeView').text.split(':')[-1].strip(")").strip()  # (Найдено: n)
+            print(f"Количество записей: {amount}")
 
             # Составление списка с граничными номерами страниц
             amount = (float(amount) / 100).__ceil__()
