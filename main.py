@@ -35,48 +35,40 @@ def open_inventory_window():
     driver.find_element(By.XPATH,
                         '//*[@id="realTrafficFindForm"]/table/tbody/tr[1]/td/table/tbody/tr/td[2]/label[3]').click()  # Удаление
 
+def try_click(element_XPATH):
+    try:
+        driver.find_element(By.XPATH, element_XPATH).click()
+    except Exception as e:
+        try_click(element_XPATH)
+
+def try_click_ID(element_ID):
+    try:
+        driver.find_element(By.ID, element_ID).click()
+    except Exception as e:
+        try_click_ID(element_ID)
+    
+
 
 def load_into_window(code, number):
-    counter = 0
     try:
-        driver.find_element(By.NAME, 'realTrafficVUTemplate').clear()
-        counter += 1
-        
-        driver.find_element(By.NAME, 'realTrafficVUTemplate').send_keys(code)  # Загружаем код в окно
-        counter += 1
-
-        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[1]').click()
-        counter += 1
-
-        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a').click() # Лупа
-        
-        # element = wait.until(
-        #     EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a'))) # Лупа
-        # element.click()
-        
-        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img').click()  
-        counter += 1
-
-        driver.find_element(By.ID, 'checkbox-all').click()
-        counter += 1
-
-        driver.find_element(By.XPATH, '//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[2]').click()
-        counter += 1
-        
-        driver.find_element(By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a').click() # Лупа
-        
-        # element = wait.until(
-        #     EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div[3]/form[1]/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/a'))) # Лупа
-        # element.click()
-        
-        counter += 1
-
-        driver.find_element(By.ID, 'checkbox-all').click()
-        print(f'Добавлен элемент {number}){code}')
+        window = driver.find_element(By.NAME, 'realTrafficVUTemplate')
+        window.clear()
+        window.send_keys(code)  # Загружаем код в окно
     except Exception as e:
-        print(counter)
-        # driver.save_screenshot(f"error_{number}.png")
+        print("exception during window load. Retrying")
         load_into_window(code, number)
+
+    try_click('//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[1]')
+    try_click('//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img')  # Лупа
+
+    try_click_ID('checkbox-all')
+
+    try_click('//*[@id="findTrafficForm"]/td/table/tbody/tr[2]/td[2]/label[2]')
+    try_click('//*[@id="findTrafficForm"]/td/table/tbody/tr[3]/td[2]/a/img')  # Лупа
+
+    try_click_ID('checkbox-all')
+        
+    print(f'Добавлен элемент {number}){code}')
 
 
 
@@ -130,7 +122,7 @@ def create_list_codes(df):
         two_months_ago = (today - datetime.timedelta(days=60))
         if (expiry <= today) or (arrival <= two_months_ago):
             return True
-        return False
+        return True # Set to False
 
     result = []
     for row in df.itertuples(index=False, name='products'):
@@ -196,9 +188,10 @@ for user in get_all_users():
                 amount = driver.find_element(By.ID, 'totalSizeView').text.split(':')[-1].strip(")").strip()  # (Найдено: n)
             print(f"Количество записей: {amount}")
 
-            # Составление списка с граничными номерами страниц
+            # Составление списка с граничными номерами страниц. Не работает как надо в граничных случаях, при 9 страницах например
             amount = (float(amount) / 100).__ceil__()
-            pagelist = [0]
+            print(f"Количество страниц по 100 записей: {amount}")
+            pagelist = [1]
             pagelist.extend([i for i in range(9, amount, 9)])
             pagelist.append((pagelist[-1] + amount % 9) if amount >= 9 else amount % 9)
             print(f"pagelist:{pagelist}")
@@ -227,6 +220,7 @@ for user in get_all_users():
                 page_to_print = page_to_print[-1]
                 page_to_print = page_to_print.drop(page_to_print.columns[[0]], axis=1)
                 data = pd.concat([data, page_to_print], ignore_index=True)
+                print(data)
                 driver.close()
                 driver.switch_to.window(main_handle)
                 current_pages_idx += 1
